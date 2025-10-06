@@ -46,18 +46,40 @@ const TeamMemberDashboard = () => {
     }
   };
 
+  const parseNote = (noteString) => {
+    // Parse notes in format: "[timestamp] author: content"
+    const match = noteString.match(/^\[(.*?)\]\s+(.*?):\s+(.*)$/);
+    if (match) {
+      return {
+        timestamp: match[1],
+        author: match[2],
+        content: match[3]
+      };
+    }
+    // Fallback for notes that don't match the expected format
+    return {
+      timestamp: new Date().toISOString(),
+      author: 'Unknown',
+      content: noteString
+    };
+  };
+
   const addNoteToContact = async (contactId) => {
     if (!newNote.trim()) return;
     
     try {
+      console.log('Adding note to contact:', contactId, { note: newNote });
       await apiClient.post(`/contacts/${contactId}/notes`, { note: newNote });
       setNewNote('');
       fetchData();
       // Update selected contact to show new note
       const updatedContact = await apiClient.get(`/contacts/${contactId}`);
       setSelectedContact(updatedContact.data);
+      console.log('Note added successfully');
     } catch (error) {
       console.error('Error adding note:', error);
+      console.error('Error response:', error.response?.data);
+      alert(`Failed to add note: ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -399,14 +421,17 @@ const TeamMemberDashboard = () => {
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Notes</h4>
               {selectedContact.notes && selectedContact.notes.length > 0 ? (
                 <div className="space-y-3 max-h-40 overflow-y-auto">
-                  {selectedContact.notes.map((note, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-gray-900">{note.note}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(note.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+                  {selectedContact.notes.map((noteString, index) => {
+                    const note = parseNote(noteString);
+                    return (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                        <p className="text-gray-900">{note.content}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          By {note.author} on {new Date(note.timestamp).toLocaleDateString()}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm">No notes available</p>
@@ -417,6 +442,11 @@ const TeamMemberDashboard = () => {
                   placeholder="Add a note..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && newNote.trim()) {
+                      addNoteToContact(selectedContact.id);
+                    }
+                  }}
                   className="flex-1"
                 />
                 <Button
