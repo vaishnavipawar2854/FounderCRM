@@ -100,10 +100,18 @@ const FounderDashboard = () => {
   const handleAddTask = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.post('/tasks', {
+      console.log('Creating task with data:', {
         ...taskForm,
         due_date: taskForm.due_date || null
       });
+      
+      const response = await apiClient.post('/tasks', {
+        ...taskForm,
+        due_date: taskForm.due_date || null
+      });
+      
+      console.log('Task created successfully:', response.data);
+      
       setTaskForm({
         title: '',
         description: '',
@@ -115,6 +123,8 @@ const FounderDashboard = () => {
       fetchData();
     } catch (error) {
       console.error('Error adding task:', error);
+      console.error('Error response:', error.response?.data);
+      alert(`Failed to create task: ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -306,6 +316,11 @@ const FounderDashboard = () => {
     return <Badge variant={variants[status]} size="sm">{labels[status]}</Badge>;
   };
 
+  const getTeamMemberName = (memberId) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? member.name : 'Unknown';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -453,6 +468,7 @@ const FounderDashboard = () => {
                           <div>
                             <p className="font-medium text-gray-900">{task.title}</p>
                             <p className="text-sm text-gray-600">{task.description}</p>
+                            <p className="text-xs text-blue-600">Assigned to: {getTeamMemberName(task.assigned_to)}</p>
                           </div>
                           {getStatusBadge(task.status)}
                         </div>
@@ -573,6 +589,9 @@ const FounderDashboard = () => {
                             <div className="flex items-center space-x-4">
                               {getPriorityBadge(task.priority)}
                               {getStatusBadge(task.status)}
+                              <span className="text-sm text-blue-600 font-medium">
+                                Assigned to: {getTeamMemberName(task.assigned_to)}
+                              </span>
                               {task.due_date && (
                                 <span className="text-sm text-gray-500">
                                   Due: {new Date(task.due_date).toLocaleDateString()}
@@ -743,6 +762,23 @@ const FounderDashboard = () => {
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+              <select
+                name="assigned_to"
+                value={taskForm.assigned_to}
+                onChange={(e) => setTaskForm({...taskForm, assigned_to: e.target.value})}
+                className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select team member</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name} ({member.email})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
               <select
