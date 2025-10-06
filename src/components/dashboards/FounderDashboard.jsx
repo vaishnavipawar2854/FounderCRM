@@ -27,7 +27,8 @@ const FounderDashboard = () => {
   // Form states
   const [teamMemberForm, setTeamMemberForm] = useState({
     name: '',
-    email: ''
+    email: '',
+    password: ''
   });
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -88,7 +89,7 @@ const FounderDashboard = () => {
     try {
       const response = await apiClient.post('/users/team-member', teamMemberForm);
       setCredentials(response.data);
-      setTeamMemberForm({ name: '', email: '' });
+      setTeamMemberForm({ name: '', email: '', password: '' });
       setShowAddTeamMember(false);
       fetchData();
     } catch (error) {
@@ -164,7 +165,8 @@ const FounderDashboard = () => {
     setEditingItem(member);
     setTeamMemberForm({
       name: member.name,
-      email: member.email
+      email: member.email,
+      password: '' // Don't prefill password for editing
     });
     setShowEditTeamMember(true);
   };
@@ -214,10 +216,20 @@ const FounderDashboard = () => {
   const handleUpdateTeamMember = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.put(`/users/team/${editingItem.id}`, teamMemberForm);
+      // Only include password if it's provided
+      const updateData = {
+        name: teamMemberForm.name,
+        email: teamMemberForm.email
+      };
+      if (teamMemberForm.password.trim()) {
+        updateData.password = teamMemberForm.password;
+      }
+      
+      await apiClient.put(`/users/team/${editingItem.id}`, updateData);
       setTeamMemberForm({
         name: '',
-        email: ''
+        email: '',
+        password: ''
       });
       setShowEditTeamMember(false);
       setEditingItem(null);
@@ -264,7 +276,7 @@ const FounderDashboard = () => {
   // Status update function for tasks
   const handleTaskStatusUpdate = async (taskId, newStatus) => {
     try {
-      await apiClient.patch(`/tasks/${taskId}/status`, { status: newStatus });
+      await apiClient.put(`/tasks/${taskId}`, { status: newStatus });
       fetchData();
     } catch (error) {
       console.error('Error updating task status:', error);
@@ -684,6 +696,15 @@ const FounderDashboard = () => {
             required
             placeholder="Enter email address"
           />
+          <Input
+            label="Password"
+            type="password"
+            name="password"
+            value={teamMemberForm.password}
+            onChange={(e) => setTeamMemberForm({...teamMemberForm, password: e.target.value})}
+            required
+            placeholder="Enter password"
+          />
           <div className="flex space-x-3 pt-4">
             <Button type="submit" variant="primary" className="flex-1">
               Add Team Member
@@ -844,13 +865,23 @@ const FounderDashboard = () => {
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Assigned To"
-              name="assigned_to"
-              value={taskForm.assigned_to}
-              onChange={(e) => setTaskForm({...taskForm, assigned_to: e.target.value})}
-              placeholder="Enter assignee email"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+              <select
+                name="assigned_to"
+                value={taskForm.assigned_to}
+                onChange={(e) => setTaskForm({...taskForm, assigned_to: e.target.value})}
+                className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select team member</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name} ({member.email})
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
               <select
@@ -987,6 +1018,14 @@ const FounderDashboard = () => {
             onChange={(e) => setTeamMemberForm({...teamMemberForm, email: e.target.value})}
             required
             placeholder="Enter email address"
+          />
+          <Input
+            label="New Password (leave empty to keep current)"
+            type="password"
+            name="password"
+            value={teamMemberForm.password}
+            onChange={(e) => setTeamMemberForm({...teamMemberForm, password: e.target.value})}
+            placeholder="Enter new password (optional)"
           />
           <div className="flex space-x-3 pt-4">
             <Button type="submit" variant="primary" className="flex-1">
