@@ -1,9 +1,9 @@
 services:
   - type: web
     name: foundercrm-frontend
-    runtime: static
+    runtime: node
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: npm start
     envVars:
       - key: VITE_API_URL
         value: https://foundercrm-backend.onrender.com/api/v1

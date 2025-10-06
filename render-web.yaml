@@ -1,4 +1,4 @@
-# Alternative render.yaml for Web Service deployment
+# Web Service deployment configuration for Render
 services:
   - type: web
     name: foundercrm-frontend
