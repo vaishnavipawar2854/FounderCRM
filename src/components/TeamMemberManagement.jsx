@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import apiClient from '../api/apiClient';
 import { Button, Card, Input } from './common';
 
-const TeamMemberManagement = ({ token }) => {
+const TeamMemberManagement = () => {
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -16,23 +16,15 @@ const TeamMemberManagement = ({ token }) => {
     setMessage('');
     
     try {
-      const response = await axios.post(
-        'http://localhost:8000/api/v1/auth/create-team-member',
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await apiClient.post('/auth/create-team-member', formData);
       
       setCredentials(response.data);
       setMessage('Team member created successfully!');
       setMessageType('success');
       setFormData({ name: '', email: '' });
     } catch (error) {
-      setMessage(error.response?.data?.detail || 'Error creating team member');
+      console.error('Error creating team member:', error);
+      setMessage(error.response?.data?.detail || error.message || 'Error creating team member');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -43,12 +35,9 @@ const TeamMemberManagement = ({ token }) => {
     if (!credentials) return;
     
     try {
-      const response = await axios.get(
-        `http://localhost:8000/api/v1/auth/download-credentials/${credentials.user.id}?generated_password=${credentials.generated_password}`,
+      const response = await apiClient.get(
+        `/auth/download-credentials/${credentials.user.id}?generated_password=${credentials.generated_password}`,
         {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           responseType: 'blob'
         }
       );
@@ -63,6 +52,7 @@ const TeamMemberManagement = ({ token }) => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      console.error('Error downloading credentials:', error);
       setMessage('Error downloading credentials');
       setMessageType('error');
     }

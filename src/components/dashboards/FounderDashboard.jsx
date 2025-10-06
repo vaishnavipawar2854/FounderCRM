@@ -135,6 +135,142 @@ const FounderDashboard = () => {
     }
   };
 
+  // Edit functions
+  const handleEditTask = (task) => {
+    setEditingItem(task);
+    setTaskForm({
+      title: task.title,
+      description: task.description,
+      assigned_to: task.assigned_to || '',
+      priority: task.priority,
+      due_date: task.due_date ? task.due_date.split('T')[0] : ''
+    });
+    setShowEditTask(true);
+  };
+
+  const handleEditContact = (contact) => {
+    setEditingItem(contact);
+    setContactForm({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone || '',
+      company: contact.company || '',
+      position: contact.position || ''
+    });
+    setShowEditContact(true);
+  };
+
+  const handleEditTeamMember = (member) => {
+    setEditingItem(member);
+    setTeamMemberForm({
+      name: member.name,
+      email: member.email
+    });
+    setShowEditTeamMember(true);
+  };
+
+  // Update functions
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
+    try {
+      await apiClient.put(`/tasks/${editingItem.id}`, {
+        ...taskForm,
+        due_date: taskForm.due_date || null
+      });
+      setTaskForm({
+        title: '',
+        description: '',
+        assigned_to: '',
+        priority: 'medium',
+        due_date: ''
+      });
+      setShowEditTask(false);
+      setEditingItem(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleUpdateContact = async (e) => {
+    e.preventDefault();
+    try {
+      await apiClient.put(`/contacts/${editingItem.id}`, contactForm);
+      setContactForm({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        position: ''
+      });
+      setShowEditContact(false);
+      setEditingItem(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating contact:', error);
+    }
+  };
+
+  const handleUpdateTeamMember = async (e) => {
+    e.preventDefault();
+    try {
+      await apiClient.put(`/users/${editingItem.id}`, teamMemberForm);
+      setTeamMemberForm({
+        name: '',
+        email: ''
+      });
+      setShowEditTeamMember(false);
+      setEditingItem(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating team member:', error);
+    }
+  };
+
+  // Delete functions
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await apiClient.delete(`/tasks/${taskId}`);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    if (window.confirm('Are you sure you want to delete this contact?')) {
+      try {
+        await apiClient.delete(`/contacts/${contactId}`);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting contact:', error);
+      }
+    }
+  };
+
+  const handleDeleteTeamMember = async (memberId) => {
+    if (window.confirm('Are you sure you want to delete this team member?')) {
+      try {
+        await apiClient.delete(`/users/${memberId}`);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting team member:', error);
+      }
+    }
+  };
+
+  // Status update function for tasks
+  const handleTaskStatusUpdate = async (taskId, newStatus) => {
+    try {
+      await apiClient.patch(`/tasks/${taskId}/status`, { status: newStatus });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  };
+
   const getPriorityBadge = (priority) => {
     const variants = {
       low: 'success',
@@ -372,10 +508,18 @@ const FounderDashboard = () => {
                           </div>
                         </div>
                         <div className="mt-4 flex space-x-2">
-                          <Button size="sm" variant="secondary">
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => handleEditTeamMember(member)}
+                          >
                             Edit
                           </Button>
-                          <Button size="sm" variant="danger">
+                          <Button 
+                            size="sm" 
+                            variant="danger"
+                            onClick={() => handleDeleteTeamMember(member.id)}
+                          >
                             Delete
                           </Button>
                         </div>
@@ -425,10 +569,18 @@ const FounderDashboard = () => {
                             </div>
                           </div>
                           <div className="flex space-x-2 ml-4">
-                            <Button size="sm" variant="secondary">
+                            <Button 
+                              size="sm" 
+                              variant="secondary"
+                              onClick={() => handleEditTask(task)}
+                            >
                               Edit
                             </Button>
-                            <Button size="sm" variant="danger">
+                            <Button 
+                              size="sm" 
+                              variant="danger"
+                              onClick={() => handleDeleteTask(task.id)}
+                            >
                               Delete
                             </Button>
                           </div>
@@ -483,10 +635,18 @@ const FounderDashboard = () => {
                           )}
                         </div>
                         <div className="mt-4 flex space-x-2">
-                          <Button size="sm" variant="secondary">
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => handleEditContact(contact)}
+                          >
                             Edit
                           </Button>
-                          <Button size="sm" variant="danger">
+                          <Button 
+                            size="sm" 
+                            variant="danger"
+                            onClick={() => handleDeleteContact(contact.id)}
+                          >
                             Delete
                           </Button>
                         </div>
@@ -647,6 +807,199 @@ const FounderDashboard = () => {
               Add Contact
             </Button>
             <Button type="button" variant="secondary" onClick={() => setShowAddContact(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Modals */}
+      <Modal
+        isOpen={showEditTask}
+        onClose={() => {
+          setShowEditTask(false);
+          setEditingItem(null);
+        }}
+        title="Edit Task"
+        size="lg"
+      >
+        <form onSubmit={handleUpdateTask} className="space-y-4">
+          <Input
+            label="Task Title"
+            name="title"
+            value={taskForm.title}
+            onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+            required
+            placeholder="Enter task title"
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              name="description"
+              value={taskForm.description}
+              onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+              rows={3}
+              className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="Enter task description"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Assigned To"
+              name="assigned_to"
+              value={taskForm.assigned_to}
+              onChange={(e) => setTaskForm({...taskForm, assigned_to: e.target.value})}
+              placeholder="Enter assignee email"
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+              <select
+                name="priority"
+                value={taskForm.priority}
+                onChange={(e) => setTaskForm({...taskForm, priority: e.target.value})}
+                className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <Input
+              label="Due Date"
+              type="date"
+              name="due_date"
+              value={taskForm.due_date}
+              onChange={(e) => setTaskForm({...taskForm, due_date: e.target.value})}
+            />
+          </div>
+          <div className="flex space-x-3 pt-4">
+            <Button type="submit" variant="success" className="flex-1">
+              Update Task
+            </Button>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => {
+                setShowEditTask(false);
+                setEditingItem(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={showEditContact}
+        onClose={() => {
+          setShowEditContact(false);
+          setEditingItem(null);
+        }}
+        title="Edit Contact"
+        size="lg"
+      >
+        <form onSubmit={handleUpdateContact} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Full Name"
+              name="name"
+              value={contactForm.name}
+              onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+              required
+              placeholder="Enter contact's name"
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              name="email"
+              value={contactForm.email}
+              onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+              required
+              placeholder="Enter email address"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Phone Number"
+              name="phone"
+              value={contactForm.phone}
+              onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
+              placeholder="Enter phone number"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Company"
+              name="company"
+              value={contactForm.company}
+              onChange={(e) => setContactForm({...contactForm, company: e.target.value})}
+              placeholder="Enter company name"
+            />
+            <Input
+              label="Position"
+              name="position"
+              value={contactForm.position}
+              onChange={(e) => setContactForm({...contactForm, position: e.target.value})}
+              placeholder="Enter job position"
+            />
+          </div>
+          <div className="flex space-x-3 pt-4">
+            <Button type="submit" variant="primary" className="flex-1">
+              Update Contact
+            </Button>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => {
+                setShowEditContact(false);
+                setEditingItem(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={showEditTeamMember}
+        onClose={() => {
+          setShowEditTeamMember(false);
+          setEditingItem(null);
+        }}
+        title="Edit Team Member"
+      >
+        <form onSubmit={handleUpdateTeamMember} className="space-y-4">
+          <Input
+            label="Full Name"
+            name="name"
+            value={teamMemberForm.name}
+            onChange={(e) => setTeamMemberForm({...teamMemberForm, name: e.target.value})}
+            required
+            placeholder="Enter team member's name"
+          />
+          <Input
+            label="Email Address"
+            type="email"
+            name="email"
+            value={teamMemberForm.email}
+            onChange={(e) => setTeamMemberForm({...teamMemberForm, email: e.target.value})}
+            required
+            placeholder="Enter email address"
+          />
+          <div className="flex space-x-3 pt-4">
+            <Button type="submit" variant="primary" className="flex-1">
+              Update Team Member
+            </Button>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => {
+                setShowEditTeamMember(false);
+                setEditingItem(null);
+              }}
+            >
               Cancel
             </Button>
           </div>
