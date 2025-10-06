@@ -1,0 +1,10 @@
+# Alternative render.yaml for Web Service deployment
+services:
+  - type: web
+    name: foundercrm-frontend
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: VITE_API_URL
+        value: https://foundercrm-backend.onrender.com/api/v1
