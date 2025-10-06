@@ -16,7 +16,7 @@ const TeamMemberManagement = () => {
     setMessage('');
     
     try {
-      const response = await apiClient.post('/auth/create-team-member', formData);
+      const response = await apiClient.post('/users/team-member', formData);
       
       setCredentials(response.data);
       setMessage('Team member created successfully!');

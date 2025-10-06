@@ -86,7 +86,7 @@ const FounderDashboard = () => {
   const handleAddTeamMember = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/auth/create-team-member', teamMemberForm);
+      const response = await apiClient.post('/users/team-member', teamMemberForm);
       setCredentials(response.data);
       setTeamMemberForm({ name: '', email: '' });
       setShowAddTeamMember(false);
@@ -214,7 +214,7 @@ const FounderDashboard = () => {
   const handleUpdateTeamMember = async (e) => {
     e.preventDefault();
     try {
-      await apiClient.put(`/users/${editingItem.id}`, teamMemberForm);
+      await apiClient.put(`/users/team/${editingItem.id}`, teamMemberForm);
       setTeamMemberForm({
         name: '',
         email: ''
@@ -253,7 +253,7 @@ const FounderDashboard = () => {
   const handleDeleteTeamMember = async (memberId) => {
     if (window.confirm('Are you sure you want to delete this team member?')) {
       try {
-        await apiClient.delete(`/users/${memberId}`);
+        await apiClient.delete(`/users/team/${memberId}`);
         fetchData();
       } catch (error) {
         console.error('Error deleting team member:', error);
