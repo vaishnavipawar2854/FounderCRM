@@ -7,11 +7,25 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
-    allowedHosts: 'all'
+    // Allow render host(s) explicitly to avoid blocked host errors in production
+    // You can add more hosts here as needed
+    allowedHosts: [
+      'foundercrm-de91.onrender.com',
+      'foundercrm-de91.onrender.com:5173',
+      'localhost',
+      '127.0.0.1',
+      'host.docker.internal'
+    ]
   },
   preview: {
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
-    allowedHosts: 'all'
+    allowedHosts: [
+      'foundercrm-de91.onrender.com',
+      'foundercrm-de91.onrender.com:4173',
+      'localhost',
+      '127.0.0.1',
+      'host.docker.internal'
+    ]
   }
 })
